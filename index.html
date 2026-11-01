@@ -1,0 +1,444 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Thought Jar</title>
+<meta name="theme-color" content="#1d1530">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Thought Jar">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Mystery+Quest&display=swap">
+<style>
+/* Layout: one-screen night scene. Monster up top, one giant button, the jar of glowing thoughts below. */
+:root{
+  --night:#1d1530; --night-2:#2b2047; --night-3:#3a2c5e;
+  --ink:#f5efff; --muted:#bfb2dc;
+  --glow:#ffc94a; --glow-soft:#ffe39a; --glow-ink:#3b2400;
+  --mon:#5fb7a0; --mon-dark:#3f8a77; --mon-belly:#a9e3d2;
+  --glass:#8fd3ff;
+  --danger:#ff9c9c;
+  --display:"Mystery Quest","Fredoka",system-ui,sans-serif;
+  --body:"Fredoka",ui-rounded,system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0}
+body{
+  background:radial-gradient(120% 70% at 50% 0%,var(--night-3) 0%,var(--night) 60%) fixed,var(--night);
+  color:var(--ink);font-family:var(--body);font-size:18px;line-height:1.35;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  overflow-x:hidden;-webkit-user-select:none;user-select:none;
+}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+button:focus-visible,input:focus-visible{outline:3px solid var(--glow);outline-offset:3px}
+.screen{min-height:100%;max-width:520px;margin:0 auto;display:flex;flex-direction:column;padding-block:12px 20px;gap:12px}
+
+/* top bar */
+.bar{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.title{font-family:var(--display);font-size:1.6rem;letter-spacing:.02em;margin:0;line-height:1.1;text-wrap:balance}
+.icon-btn{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:var(--night-2);color:var(--muted)}
+.icon-btn svg{width:22px;height:22px}
+
+/* monster */
+.stage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:0}
+.monster{width:min(64vw,240px);height:auto;overflow:visible}
+.mon-body{fill:var(--mon)} .mon-dark{fill:var(--mon-dark)} .mon-belly{fill:var(--mon-belly)}
+#mouth{transform-box:fill-box;transform-origin:center;transform:scaleY(.25);transition:transform .25s ease}
+#lid{transform-box:fill-box;transform-origin:top;transform:scaleY(0);animation:blink 5s infinite}
+#pupil{transition:transform .3s ease}
+.monster.listening #mouth{transform:scaleY(1);animation:talk .5s ease-in-out infinite alternate}
+.monster.listening #pupil{transform:translateY(-4px) scale(1.15)}
+.monster.listening .mon-wrap{animation:bob .9s ease-in-out infinite alternate}
+.monster.gulp .mon-wrap{animation:gulp .6s ease}
+.mon-wrap{transform-box:fill-box;transform-origin:bottom center}
+@keyframes blink{0%,94%,100%{transform:scaleY(0)}96%{transform:scaleY(1)}}
+@keyframes talk{to{transform:scaleY(.75)}}
+@keyframes bob{to{transform:translateY(-6px) rotate(1.5deg)}}
+@keyframes gulp{0%{transform:scale(1)}35%{transform:scale(1.12,.9)}70%{transform:scale(.95,1.06)}100%{transform:scale(1)}}
+
+.say{min-height:3.2em;text-align:center;font-size:1.3rem;font-weight:500;max-width:22ch;text-wrap:balance;margin:0}
+.timer{font-variant-numeric:tabular-nums;color:var(--glow-soft);font-weight:600}
+
+/* the big button */
+.rec{
+  width:min(70vw,260px);aspect-ratio:1;max-width:100%;border-radius:50%;margin:0 auto;
+  background:radial-gradient(circle at 40% 35%,var(--glow-soft),var(--glow) 60%);
+  color:var(--glow-ink);font-weight:700;font-size:1.45rem;line-height:1.15;
+  box-shadow:0 0 0 10px rgba(255,201,74,.16),0 0 50px rgba(255,201,74,.45);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+  transition:transform .12s ease;touch-action:manipulation;position:relative
+}
+.rec:active{transform:scale(.96)}
+.rec svg{width:52px;height:52px}
+.rec.on{background:radial-gradient(circle at 40% 35%,#fff3c9,var(--glow-soft) 70%);animation:pulse 1.2s ease-in-out infinite}
+.rec .ring{position:absolute;inset:-14px;width:calc(100% + 28px);height:calc(100% + 28px);pointer-events:none;overflow:visible}
+.ring circle{fill:none;stroke:var(--glow);stroke-width:5;stroke-linecap:round}
+@keyframes pulse{50%{box-shadow:0 0 0 18px rgba(255,201,74,.12),0 0 70px rgba(255,201,74,.6)}}
+
+/* jar row */
+.jar-row{display:flex;align-items:center;gap:14px;padding:10px 16px;border-radius:22px;background:var(--night-2);text-align:left;width:100%}
+.jar-row svg{width:58px;height:68px;flex:none;overflow:visible}
+.jar-row strong{display:block;font-size:1.15rem}
+.jar-row span{color:var(--muted);font-size:.95rem}
+.jar-row.bump{animation:gulp .6s ease}
+.fly{fill:var(--glow);filter:drop-shadow(0 0 3px var(--glow));animation:float 3s ease-in-out infinite alternate}
+@keyframes float{to{transform:translate(2px,-5px)}}
+
+/* list screen */
+.hint{color:var(--muted);margin:0;max-width:34ch}
+.list{display:flex;flex-direction:column;gap:12px;padding:0;margin:0;list-style:none}
+.item{background:var(--night-2);border-radius:22px;padding:14px;display:grid;grid-template-columns:auto 1fr;gap:10px 14px;align-items:center}
+.item .dot{width:22px;height:22px;border-radius:50%;background:var(--glow);box-shadow:0 0 12px var(--glow)}
+.item .when{font-weight:600;font-size:1.1rem}
+.item .len{color:var(--muted);font-size:.95rem;font-variant-numeric:tabular-nums}
+.actions{grid-column:1/-1;display:flex;gap:10px;flex-wrap:wrap}
+.pill{min-height:52px;padding:0 20px;border-radius:999px;font-weight:600;font-size:1.05rem;display:inline-flex;align-items:center;gap:8px}
+.pill svg{width:20px;height:20px}
+.pill.play{background:var(--glow);color:var(--glow-ink);flex:1}
+.pill.quiet{background:var(--night-3);color:var(--ink)}
+.pill.warn{background:var(--danger);color:#3a0d0d}
+.item.leaving{animation:away .7s ease forwards}
+@keyframes away{to{opacity:0;transform:translateY(-40px) scale(.9)}}
+.empty{text-align:center;color:var(--muted);padding:40px 10px;display:flex;flex-direction:column;align-items:center;gap:8px}
+.empty svg{width:90px;height:105px;opacity:.8}
+
+/* settings */
+.field{display:flex;flex-direction:column;gap:8px}
+.field label{font-weight:600}
+.field input{font:inherit;font-size:1.2rem;padding:12px 16px;border-radius:16px;border:2px solid var(--night-3);background:var(--night-2);color:var(--ink);width:100%;-webkit-user-select:text;user-select:text}
+.swatches{display:flex;gap:14px;flex-wrap:wrap}
+.sw{width:56px;height:56px;border-radius:50%;border:4px solid transparent}
+.sw[aria-pressed="true"]{border-color:var(--ink)}
+.note{color:var(--muted);font-size:.9rem;margin:0}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+}
+</style>
+</head>
+<body>
+
+<!-- HOME -->
+<main id="home" class="screen">
+  <div class="bar">
+    <h1 class="title" id="title">Gulp's Thought Jar</h1>
+    <button class="icon-btn" id="openSettings" aria-label="Change monster">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>
+    </button>
+  </div>
+
+  <section class="stage">
+    <svg class="monster" id="monster" viewBox="0 0 240 220" aria-hidden="true">
+      <g class="mon-wrap">
+        <path class="mon-dark" d="M70 62 L58 18 L94 52 Z"/>
+        <path class="mon-dark" d="M170 62 L182 18 L146 52 Z"/>
+        <ellipse class="mon-dark" cx="82" cy="206" rx="26" ry="11"/>
+        <ellipse class="mon-dark" cx="158" cy="206" rx="26" ry="11"/>
+        <path class="mon-body" d="M34 198 C14 140 26 52 120 46 C214 52 226 140 206 198 Q120 214 34 198 Z"/>
+        <ellipse class="mon-dark" cx="30" cy="140" rx="14" ry="24" transform="rotate(-20 30 140)"/>
+        <ellipse class="mon-dark" cx="210" cy="140" rx="14" ry="24" transform="rotate(20 210 140)"/>
+        <ellipse class="mon-belly" cx="120" cy="170" rx="58" ry="30" opacity=".55"/>
+        <circle cx="120" cy="102" r="34" fill="#fffaf0"/>
+        <g id="pupil"><circle cx="120" cy="106" r="15" fill="#1d1530"/><circle cx="126" cy="100" r="5" fill="#fffaf0"/></g>
+        <rect id="lid" class="mon-body" x="84" y="66" width="72" height="72"/>
+        <g id="mouth">
+          <ellipse cx="120" cy="160" rx="34" ry="20" fill="#24102e"/>
+          <path d="M98 146 L104 158 L110 146 Z M130 146 L136 158 L142 146 Z" fill="#fffaf0"/>
+        </g>
+      </g>
+    </svg>
+    <p class="say" id="say" aria-live="polite">Got a thought? Tell Gulp!</p>
+  </section>
+
+  <button class="rec" id="rec" aria-label="Tell a thought">
+    <svg class="ring" id="ring" viewBox="0 0 100 100" hidden><circle id="ringArc" cx="50" cy="50" r="47" pathLength="100" stroke-dasharray="0 100" transform="rotate(-90 50 50)"/></svg>
+    <svg id="micIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="9" y="2.5" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3.5"/></svg>
+    <span id="recLabel">Tap to tell</span>
+  </button>
+
+  <button class="jar-row" id="openJar">
+    <svg viewBox="0 0 60 70" id="jarMini" aria-hidden="true"></svg>
+    <div><strong id="jarCount">The jar is empty</strong><span>Open the jar</span></div>
+  </button>
+</main>
+
+<!-- JAR -->
+<main id="jar" class="screen" hidden>
+  <div class="bar">
+    <button class="icon-btn" id="backFromJar" aria-label="Back">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
+    </button>
+    <h1 class="title" style="flex:1">Thoughts in the jar</h1>
+  </div>
+  <p class="hint">Play them with a grown-up. When you've talked about one, you can let it go.</p>
+  <ul class="list" id="list"></ul>
+</main>
+
+<!-- SETTINGS -->
+<main id="settings" class="screen" hidden>
+  <div class="bar">
+    <button class="icon-btn" id="backFromSettings" aria-label="Back">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
+    </button>
+    <h1 class="title" style="flex:1">My monster</h1>
+  </div>
+  <div class="field">
+    <label for="monName">Monster's name</label>
+    <input id="monName" maxlength="16" autocomplete="off" placeholder="Gulp">
+  </div>
+  <div class="field">
+    <label>Monster's color</label>
+    <div class="swatches" id="swatches"></div>
+  </div>
+  <p class="note">Thoughts stay on this phone only. Nobody else can hear them.</p>
+</main>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const MAX_SEC = 60;
+
+  /* ---------- settings ---------- */
+  const COLORS = [
+    {name:'Moss',   mon:'#5fb7a0', dark:'#3f8a77', belly:'#a9e3d2'},
+    {name:'Grape',  mon:'#9b7be0', dark:'#6e52b3', belly:'#d6c7fb'},
+    {name:'Pumpkin',mon:'#f08a4b', dark:'#c0612a', belly:'#ffd0ad'},
+    {name:'Slime',  mon:'#8fcf4f', dark:'#5f9a2b', belly:'#d6f2b4'},
+    {name:'Ghost',  mon:'#c9d3ea', dark:'#8f9bba', belly:'#ffffff'},
+    {name:'Bubblegum',mon:'#ef7fb4', dark:'#c2508a', belly:'#ffd0e6'}
+  ];
+  const load = (k,d) => { try { const v = localStorage.getItem(k); return v ?? d; } catch { return d; } };
+  const store = (k,v) => { try { localStorage.setItem(k,v); } catch {} };
+  let monName = load('tj-name','Gulp');
+  let colorIdx = +load('tj-color','0') || 0;
+
+  function applySettings(){
+    const c = COLORS[colorIdx] || COLORS[0];
+    const r = document.documentElement.style;
+    r.setProperty('--mon',c.mon); r.setProperty('--mon-dark',c.dark); r.setProperty('--mon-belly',c.belly);
+    const n = monName.trim() || 'Gulp';
+    $('title').textContent = n + "'s Thought Jar";
+    if (state === 'idle') setSay(`Got a thought? Tell ${n}!`);
+  }
+  const nm = () => monName.trim() || 'Gulp';
+
+  COLORS.forEach((c,i) => {
+    const b = document.createElement('button');
+    b.className = 'sw'; b.style.background = c.mon; b.setAttribute('aria-label', c.name);
+    b.onclick = () => { colorIdx = i; store('tj-color', String(i)); paintSwatches(); applySettings(); };
+    $('swatches').appendChild(b);
+  });
+  function paintSwatches(){ [...$('swatches').children].forEach((b,i)=>b.setAttribute('aria-pressed', String(i===colorIdx))); }
+  $('monName').addEventListener('input', e => { monName = e.target.value; store('tj-name', monName); applySettings(); });
+
+  /* ---------- storage (IndexedDB, stays on this phone) ---------- */
+  let dbp;
+  function db(){
+    if (!dbp) dbp = new Promise((res, rej) => {
+      const r = indexedDB.open('thought-jar', 1);
+      r.onupgradeneeded = () => r.result.createObjectStore('thoughts', {keyPath:'id'});
+      r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+    });
+    return dbp;
+  }
+  async function tx(mode, fn){
+    const d = await db();
+    return new Promise((res, rej) => {
+      const t = d.transaction('thoughts', mode); const s = t.objectStore('thoughts');
+      const out = fn(s); t.oncomplete = () => res(out && out.result); t.onerror = () => rej(t.error);
+    });
+  }
+  const addThought = t => tx('readwrite', s => s.put(t));
+  const allThoughts = () => tx('readonly', s => s.getAll()).then(a => (a||[]).sort((x,y)=>x.created-y.created));
+  const delThought = id => tx('readwrite', s => s.delete(id));
+  try { navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch {}
+
+  /* ---------- jar picture ---------- */
+  const SPOTS = [[30,50],[20,40],[40,42],[26,58],[38,56],[30,34],[18,52],[42,30],[22,28],[34,46],[44,52],[16,36],[28,22],[38,24]];
+  function jarSVG(n){
+    let flies = '';
+    for (let i=0;i<Math.min(n,SPOTS.length);i++){
+      const [x,y] = SPOTS[i];
+      flies += `<circle class="fly" cx="${x}" cy="${y}" r="3.4" style="animation-delay:${(i*0.37)%3}s"/>`;
+    }
+    return `<rect x="17" y="2" width="26" height="9" rx="3" fill="#8a7bb0"/>
+      <path d="M19 11 h22 v4 c8 3 12 10 12 18 v26 c0 6-4 9-10 9 H17 c-6 0-10-3-10-9 V33 c0-8 4-15 12-18 z" fill="rgba(143,211,255,.12)" stroke="#8fd3ff" stroke-opacity=".7" stroke-width="2"/>
+      <path d="M13 32 v22" stroke="#fff" stroke-opacity=".35" stroke-width="3" stroke-linecap="round"/>${flies}`;
+  }
+
+  async function refreshJar(){
+    let list = [];
+    try { list = await allThoughts(); } catch {}
+    const n = list.length;
+    $('jarMini').innerHTML = jarSVG(n);
+    $('jarCount').textContent = n === 0 ? 'The jar is empty' : n === 1 ? '1 thought saved' : `${n} thoughts saved`;
+    return list;
+  }
+
+  /* ---------- recording ---------- */
+  let state = 'idle', rec, stream, chunks = [], t0 = 0, tickT, mime = '';
+  const say = $('say');
+  function setSay(text){ say.textContent = text; }
+  const fmt = s => `${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;
+
+  function pickMime(){
+    if (!window.MediaRecorder || !MediaRecorder.isTypeSupported) return '';
+    for (const m of ['audio/mp4','audio/webm;codecs=opus','audio/webm','audio/ogg']) if (MediaRecorder.isTypeSupported(m)) return m;
+    return '';
+  }
+
+  async function start(){
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.MediaRecorder){
+      setSay(`${nm()} can't hear on this phone. Ask a grown-up for help.`); return;
+    }
+    state = 'starting';
+    try { stream = await navigator.mediaDevices.getUserMedia({audio:true}); }
+    catch { state = 'idle'; setSay(`${nm()} can't hear you. Ask a grown-up to turn on the microphone.`); return; }
+    mime = pickMime();
+    try { rec = mime ? new MediaRecorder(stream, {mimeType:mime}) : new MediaRecorder(stream); }
+    catch { rec = new MediaRecorder(stream); }
+    chunks = [];
+    rec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
+    rec.onstop = finish;
+    rec.start(250);
+    t0 = Date.now(); state = 'rec';
+    $('monster').classList.add('listening');
+    $('rec').classList.add('on'); $('ring').toggleAttribute('hidden', false);
+    $('recLabel').textContent = "I'm done"; $('micIcon').toggleAttribute('hidden', true);
+    $('rec').setAttribute('aria-label', 'Stop and save');
+    tick();
+    tickT = setInterval(tick, 200);
+  }
+  function tick(){
+    const s = (Date.now()-t0)/1000;
+    say.innerHTML = `${nm()} is listening… <span class="timer">${fmt(s)}</span>`;
+    $('ringArc').setAttribute('stroke-dasharray', `${Math.min(100, s/MAX_SEC*100)} 100`);
+    if (s >= MAX_SEC) stop();
+  }
+  function stop(){
+    if (state !== 'rec') return;
+    state = 'saving'; clearInterval(tickT);
+    try { rec.stop(); } catch { finish(); }
+    if (stream) stream.getTracks().forEach(t => t.stop());
+  }
+  function resetButton(){
+    $('monster').classList.remove('listening');
+    $('rec').classList.remove('on'); $('ring').toggleAttribute('hidden', true);
+    $('ringArc').setAttribute('stroke-dasharray','0 100');
+    $('recLabel').textContent = 'Tap to tell'; $('micIcon').toggleAttribute('hidden', false);
+    $('rec').setAttribute('aria-label','Tell a thought');
+  }
+  const SAVED = [
+    n => `Saved! ${n} is keeping it safe.`,
+    n => `Yum! That thought is in the jar.`,
+    n => `Got it! You can tell it later.`,
+    n => `${n} put it in the jar. Nice waiting!`
+  ];
+  async function finish(){
+    const secs = (Date.now()-t0)/1000;
+    resetButton();
+    if (secs < 0.8 || !chunks.length){
+      state = 'idle'; setSay(`That was super quick! Tap and tell ${nm()} again.`); return;
+    }
+    const blob = new Blob(chunks, {type: (rec && rec.mimeType) || mime || 'audio/webm'});
+    try {
+      await addThought({id: String(Date.now()) + Math.random().toString(36).slice(2,6), created: Date.now(), secs, blob});
+      const m = $('monster'); m.classList.remove('gulp'); void m.getBoundingClientRect(); m.classList.add('gulp');
+      setSay(SAVED[Math.floor(Math.random()*SAVED.length)](nm()));
+      await refreshJar();
+      const j = $('openJar'); j.classList.remove('bump'); void j.offsetWidth; j.classList.add('bump');
+      try { navigator.vibrate && navigator.vibrate(60); } catch {}
+    } catch {
+      setSay(`Oops, ${nm()} dropped it. Try one more time.`);
+    }
+    state = 'idle';
+  }
+  $('rec').addEventListener('click', () => {
+    if (state === 'idle') start();
+    else if (state === 'rec') stop();
+  });
+
+  /* ---------- jar screen ---------- */
+  let audio, playingId = null, urls = [];
+  function stopAudio(){
+    if (audio){ audio.pause(); audio = null; }
+    playingId = null;
+    document.querySelectorAll('.pill.play').forEach(b => b.innerHTML = playIcon + 'Play');
+  }
+  const playIcon = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l13-7.5z"/></svg>';
+  const stopIcon = '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>';
+
+  function whenText(ts){
+    const d = new Date(ts), now = new Date();
+    const time = d.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'});
+    const y = new Date(now); y.setDate(now.getDate()-1);
+    if (d.toDateString() === now.toDateString()) return `Today, ${time}`;
+    if (d.toDateString() === y.toDateString()) return `Yesterday, ${time}`;
+    return d.toLocaleDateString([], {weekday:'long'}) + `, ${time}`;
+  }
+
+  async function renderList(){
+    urls.forEach(u => URL.revokeObjectURL(u)); urls = [];
+    const list = await refreshJar();
+    const ul = $('list'); ul.innerHTML = '';
+    if (!list.length){
+      ul.innerHTML = `<li class="empty"><svg viewBox="0 0 60 70" aria-hidden="true">${jarSVG(0)}</svg><div>No thoughts waiting. The jar is ready for the next one!</div></li>`;
+      return;
+    }
+    for (const t of list){
+      const li = document.createElement('li'); li.className = 'item';
+      li.innerHTML = `<div class="dot"></div><div><div class="when">${whenText(t.created)}</div><div class="len">${fmt(t.secs||0)} long</div></div>
+        <div class="actions"><button class="pill play">${playIcon}Play</button><button class="pill quiet letgo">Let it go</button></div>`;
+      const url = URL.createObjectURL(t.blob); urls.push(url);
+      const playBtn = li.querySelector('.play');
+      playBtn.onclick = () => {
+        if (playingId === t.id){ stopAudio(); return; }
+        stopAudio();
+        audio = new Audio(url); playingId = t.id;
+        playBtn.innerHTML = stopIcon + 'Stop';
+        audio.onended = stopAudio;
+        audio.play().catch(() => { stopAudio(); });
+      };
+      const acts = li.querySelector('.actions');
+      li.querySelector('.letgo').onclick = () => {
+        acts.innerHTML = `<span style="flex-basis:100%;font-weight:500">Did you talk about it?</span>
+          <button class="pill warn yes">Yes, let it go</button><button class="pill quiet no">Not yet</button>`;
+        acts.querySelector('.no').onclick = () => renderList();
+        acts.querySelector('.yes').onclick = async () => {
+          if (playingId === t.id) stopAudio();
+          li.classList.add('leaving');
+          await delThought(t.id).catch(()=>{});
+          setTimeout(renderList, 650);
+        };
+      };
+      ul.appendChild(li);
+    }
+  }
+
+  /* ---------- navigation ---------- */
+  function show(id){
+    for (const s of ['home','jar','settings']) $(s).hidden = s !== id;
+    window.scrollTo(0,0);
+  }
+  $('openJar').onclick = () => { if (state === 'rec') return; show('jar'); renderList(); };
+  $('backFromJar').onclick = () => { stopAudio(); show('home'); refreshJar(); };
+  $('openSettings').onclick = () => { if (state === 'rec') return; $('monName').value = monName; paintSwatches(); show('settings'); };
+  $('backFromSettings').onclick = () => show('home');
+
+  document.addEventListener('visibilitychange', () => { if (document.hidden) { if (state === 'rec') stop(); stopAudio(); } });
+
+  applySettings();
+  refreshJar();
+})();
+</script>
+</body>
+</html>
